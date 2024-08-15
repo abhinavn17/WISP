@@ -1,8 +1,3 @@
-
-# FUNCTIONS
-###############################################################
-# A library of function that are used in the pipeline
-
 from casatasks import gaincal, fluxscale, flagdata, mstransform, applycal, exportfits
 import subprocess
 import os
@@ -111,7 +106,7 @@ def mysplitavg(myfile,myfield,myspw,mywidth,split_avg_filename):
         return split_avg_filename
 
 
-def mytclean(myfile,myniter,mythresh,srno,cell,imsize, mynterms1,mywproj,clean_robust):    # you may change the multi-scale inputs as per your field
+def mywsclean(myfile,wscommand,myniter,mythresh,srno):    # you may change the multi-scale inputs as per your field
         nameprefix = myfile.split('-selfcal')[0]
         nameprefix = nameprefix.split('.')[0]
         print("The image files have the following prefix =",nameprefix)
@@ -120,13 +115,11 @@ def mytclean(myfile,myniter,mythresh,srno,cell,imsize, mynterms1,mywproj,clean_r
         else:
                 myoutimg = nameprefix+'-selfcal'+'img'+str(srno)
 
-        print(myfile)
+        command = wscommand.split(' ')
 
-        # command = ['wsclean', '-j', '64', '-size', '8000', '8000', '-scale', '1asec', '-niter', f'{myniter}', '-mgain', '0.8', '-auto-threshold', '3', '-name', f'{myoutimg}', f'{myfile}']
+        command.extend(['-niter', str(myniter), '-name', myoutimg, myfile])
 
-        # wsclean -name Final -size 8000 8000 -scale 1arcsec -weight briggs 0.0 -niter 100000 -mgain 0.5 -abs-threshold 1e-6 -multiscale -multiscale-scales 0,5,15     -pol i -apply-primary-beam avg-Triang-II_15-02-2024_B3-selfcal7.ms
-
-        command = ['wsclean', '-j', '64', '-name', f'{myoutimg}', '-size', f'{imsize}', f'{imsize}', '-scale', '1asec', '-weight', 'briggs', f'{clean_robust}', '-niter', f'{myniter}', '-mgain', '0.8', '-auto-mask', '3', '-auto-threshold', '0.3', '-multiscale', '-multiscale-scales', '0,5,15', '-channels-out', '2', '-join-channels', '-pol', 'i', f'{myfile}']
+        # command = ['wsclean', '-j', '64', '-name', f'{myoutimg}', '-size', f'{imsize}', f'{imsize}', '-scale', '1asec', '-weight', 'briggs', f'{clean_robust}', '-niter', f'{myniter}', '-mgain', '0.8', '-auto-mask', '3', '-auto-threshold', '0.3', '-multiscale', '-multiscale-scales', '0,5,15', '-channels-out', '2', '-join-channels', '-pol', 'i', f'{myfile}']
 
         subprocess.call(command)
 
@@ -187,12 +180,9 @@ def flagresidual(myfile,myclipresid,myflagspw):
       
         flagdata(vis=myfile,mode="summary",datacolumn="RESIDUAL_DATA", extendflags=False, 
                 name=myfile+'temp.summary', action="apply", flagbackup=True,overwrite=True, writeflags=True)
-#
+      
 
-
-         
-
-def myselfcal(myfile,myref,nloops,nploops,myvalinit,mycellsize,myimagesize,mynterms2,mywproj1,mysolint1,myclipresid,myflagspw,mygainspw2,mymakedirty,niterstart,clean_robust, clipresid, uvrascal):
+def myselfcal(myfile,myref,nloops,nploops,myvalinit,mysolint1,myclipresid,mygainspw2,mymakedirty,niterstart, uvrascal, wscommand):
         myref = myref
         nscal = nloops # number of selfcal loops
         npal = nploops # number of phasecal loops
@@ -206,7 +196,7 @@ def myselfcal(myfile,myref,nloops,nploops,myvalinit,mycellsize,myimagesize,mynte
                 myniter = 0 # this is to make a dirty image
                 mythresh = str(myvalinit/(i+1))+'mJy'
                 print("Using "+ myfile[i]+" for making only an image.")
-                myimg = mytclean(myfile[i],myniter,mythresh,i,mycellsize,myimagesize,mynterms2,mywproj1,clean_robust)   # tclean
+                myimg = mywsclean(myfile[i],wscommand,myniter,mythresh,i)   # tclean
                 exportfits(imagename=myimg+'.image.tt0', fitsimage=myimg+'.fits')
                 
         else:
@@ -216,7 +206,7 @@ def myselfcal(myfile,myref,nloops,nploops,myvalinit,mycellsize,myimagesize,mynte
                                         myniter = 0 # this is to make a dirty image
                                         mythresh = str(myvalinit/(i+1))+'mJy'
                                         print("Using "+ myfile[i]+" for making only a dirty image.")
-                                        myimg = mytclean(myfile[i],myniter,mythresh,i,mycellsize,myimagesize,mynterms2,mywproj1,clean_robust)   # tclean
+                                        myimg = mywsclean(myfile[i],wscommand,myniter,mythresh,i)   # tclean
 
                         else:
                                 myniter=int(myniterstart*2**i) #myniterstart*(2**i)  # niter is doubled with every iteration int(startniter*2**count)
@@ -227,9 +217,9 @@ def myselfcal(myfile,myref,nloops,nploops,myvalinit,mycellsize,myimagesize,mynte
                                         mypap = 'p'
 #                                        print("Using "+ myfile[i]+" for imaging.")
                                 
-                                        myimg = mytclean(myfile[i],myniter,mythresh,i,mycellsize,myimagesize,mynterms2,mywproj1,clean_robust)   # tclean
+                                        myimg = mywsclean(myfile[i],wscommand,myniter,mythresh,i)   # tclean
                                         myimages.append(myimg)        # list of all the images created so far
-                                        flagresidual(myfile[i],clipresid,'')
+                                        flagresidual(myfile[i],myclipresid,'')
                                         if i>0:
                                                 myctables = mygaincal_ap(myfile[i],myref,mygt[i-1],i,mypap,mysolint1,uvrascal,mygainspw2)
                                         else:                                        
@@ -243,9 +233,9 @@ def myselfcal(myfile,myref,nloops,nploops,myvalinit,mycellsize,myimagesize,mynte
                                         mypap = 'ap'
 #                                        print("Using "+ myfile[i]+" for imaging.")
                                         
-                                        myimg = mytclean(myfile[i],myniter,mythresh,i,mycellsize,myimagesize,mynterms2,mywproj1,clean_robust)   # tclean
+                                        myimg = mywsclean(myfile[i],wscommand,myniter,mythresh,i)   # tclean
                                         myimages.append(myimg)        # list of all the images created so far
-                                        flagresidual(myfile[i],clipresid,'')
+                                        flagresidual(myfile[i],myclipresid,'')
                                         if i!= nscal:
                                                 myctables = mygaincal_ap(myfile[i],myref,mygt[i-1],i,mypap,mysolint1,'',mygainspw2)
                                                 mygt.append(myctables) # full list of gaintables
@@ -264,14 +254,3 @@ def myselfcal(myfile,myref,nloops,nploops,myvalinit,mycellsize,myimagesize,mynte
 #                        print('Ran the selfcal loop')
         return myfile, mygt, myimages
 
-
-
-#def getspws(myfile):
-#        ms.open(myfile)
-#        metadata = ms.metadata()
-#        ms.done()
-#        nspw = metadata.nspw()
-#        metadata.done()
-#        return nspw
-
-#############End of functions##############################################################################
