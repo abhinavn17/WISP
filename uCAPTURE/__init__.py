@@ -1,1 +1,1 @@
-__all__ = ['capture-casa6', 'make_config']
+__all__ = ['capture', 'make_config']

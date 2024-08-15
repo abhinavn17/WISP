@@ -1,22 +1,3 @@
-###################################################################
-# CAPTURE: CAsa Pipeline-cum-Toolkit for Upgraded GMRT data REduction
-###################################################################
-# Pipeline for analysing data from the GMRT and the uGMRT.
-# Combination of pipelines done by Ruta Kale based on pipelines developed independently by Ruta Kale 
-# and Ishwar Chandra.
-# Date: 8th Aug 2019
-# README : Please read the following instructions to run this pipeline on your data
-# Files and paths required
-# 0. This files from git should be placed and executed in the directory where your data files are located.
-# 1. If starting from lta file, please provide the paths to the listscan and gvfits executable binaries in "gvbinpath" as shown.
-# 2. Keep the vla-cals.list file in the same area.
-# Please email ruta@ncra.tifr.res.in if you run into any issue and cannot solve.
-# 
-
-
-import sys
-import logging
-import os
 import numpy as np
 from datetime import datetime
 from casatasks import clearcal
