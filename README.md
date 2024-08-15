@@ -1,8 +1,8 @@
 # uCAPTURE
 
-Imaging and selfcal pipeline taken from CAPTURE-CASA6, written by Ruta Kale. Utilizes wsclean for ridiculous speedup. Requires cleaned and calibrated msfiles. 
+Imaging and selfcal loop taken from CAPTURE-CASA6, written by Ruta Kale. This pipeline utilizes wsclean for ridiculous speedup. It requires cleaned and calibrated msfiles. 
 
-To run this pipeline, you need to build and install wsclean. The command is passed as a subprocess call, and the specific imaging paramters can be passed as a "wsclean-command" in the config.ini file.
+To run this pipeline, you need to build and install wsclean. The command is passed as a subprocess call, and the specific imaging parameters can be passed as a "wsclean-command" in the config.ini file.
 
 ## How to use
 

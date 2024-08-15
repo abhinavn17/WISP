@@ -1,0 +1,6 @@
+astropy==5.2.2
+casadata
+# casampi==0.5.5
+casatasks==6.6.0.20
+casatools==6.6.0.20
+numpy==1.24.4

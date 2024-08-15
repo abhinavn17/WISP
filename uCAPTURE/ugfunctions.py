@@ -86,26 +86,6 @@ def myrflagavg(myfile,myfield, myants, mytimdev, myfdev,mydatcol,myflagspw):
         return
 
 
-
-def mysplitinit(myfile,myfield,myspw,mywidth,split_filename):
-        '''function to split corrected data for any field'''
-        #mstransform(vis=myfile, field=myfield, spw=myspw, chanaverage=False, chanbin=mywidth, datacolumn='corrected', outputvis=str(myfield)+'.split.ms')
-        mstransform(vis=myfile, field=myfield, spw=myspw, chanaverage=False, chanbin=mywidth, datacolumn='corrected', outputvis=split_filename)
-        #myoutvis=str(myfield)+'.split.ms'
-        #return myoutvis
-        return split_filename
-
-
-def mysplitavg(myfile,myfield,myspw,mywidth,split_avg_filename):
-        '''function to split corrected data for any field'''
-#        myoutname=myfile.split('s')[0]+'avg-split.ms'
-        #myoutname='avg-'+myfile
-        #mstransform(vis=myfile, field=myfield, spw=myspw, chanaverage=True, chanbin=mywidth, datacolumn='data', outputvis=myoutname)
-        mstransform(vis=myfile, field=myfield, spw=myspw, chanaverage=True, chanbin=mywidth, datacolumn='data', outputvis=split_avg_filename)
-        #return myoutname
-        return split_avg_filename
-
-
 def mywsclean(myfile,wscommand,myniter,mythresh,srno):    # you may change the multi-scale inputs as per your field
         nameprefix = myfile.split('-selfcal')[0]
         nameprefix = nameprefix.split('.')[0]
@@ -127,14 +107,20 @@ def mywsclean(myfile,wscommand,myniter,mythresh,srno):    # you may change the m
 
 
 def mysplit(myfile,srno):
+
         filname_pre = myfile.split('-selfcal')[0]
         filname_pre = filname_pre.split('.')[0]     
-      
-        mstransform(vis=myfile, field='0', spw='', datacolumn='corrected', outputvis=filname_pre+'-selfcal'+str(srno)+'.ms')
         myoutvis=filname_pre+'-selfcal'+str(srno)+'.ms'
+
+        print("Splitting into "+myoutvis + "...")
+      
+        mstransform(vis=myfile, field='0', spw='', datacolumn='corrected', outputvis=myoutvis)
         return myoutvis
 
 def mygaincal_ap(myfile,myref,mygtable,srno,pap,mysolint,myuvrascal,mygainspw):
+
+        print("Running gaincal...")
+
         fprefix = myfile.split('-selfcal')[0]
         fprefix = fprefix.split('.')[0]
         if pap=='ap':
@@ -159,9 +145,9 @@ def mygaincal_ap(myfile,myref,mygtable,srno,pap,mysolint,myuvrascal,mygainspw):
 
 def myapplycal(myfile,mygaintables):
 
+        print('Running applycal...')        
         applycal(vis=myfile, field='0', gaintable=mygaintables, gainfield=['0'], applymode='calflag', 
                  interp=['linear'], calwt=False, parang=False)
-        print('Ran applycal.')        
 
 
 def flagresidual(myfile,myclipresid,myflagspw):
