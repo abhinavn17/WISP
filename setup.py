@@ -17,7 +17,7 @@ setup(
     entry_points={
         'console_scripts': [
             'wisp = WISP.__main__:main',
-            'make_ini = uCAPTURE.make_ini:main'
+            'make_ini = WISP.make_ini:main'
         ]
     },
     include_package_data=True
