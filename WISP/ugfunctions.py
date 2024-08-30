@@ -1,12 +1,13 @@
 from casatasks import gaincal, fluxscale, flagdata, mstransform, applycal, exportfits
 import subprocess
 import os
+import gnet.gnet.rfi_cleaner as rfi_cleaner
 
 def flagsummary(myfile):
        
         s = flagdata(vis=myfile, mode='summary')
         allkeys = s.keys()
-        print("Flagging percentage:")
+        print("\nFlagging percentage:")
         for x in allkeys:
                 try:
                         for y in s[x].keys():
@@ -113,13 +114,17 @@ def mysplit(myfile,srno):
         myoutvis=filname_pre+'-selfcal'+str(srno)+'.ms'
 
         print("Splitting into "+myoutvis + "...")
+
+        if os.path.exists(myoutvis):
+                print("File "+myoutvis+" already exists. Deleting it.")
+                os.system(f'rm -rf {myoutvis}*') 
       
         mstransform(vis=myfile, field='0', spw='', datacolumn='corrected', outputvis=myoutvis)
         return myoutvis
 
 def mygaincal_ap(myfile,myref,mygtable,srno,pap,mysolint,myuvrascal,mygainspw):
 
-        print("Running gaincal...")
+        print("\nRunning gaincal...")
 
         fprefix = myfile.split('-selfcal')[0]
         fprefix = fprefix.split('.')[0]
@@ -145,27 +150,35 @@ def mygaincal_ap(myfile,myref,mygtable,srno,pap,mysolint,myuvrascal,mygainspw):
 
 def myapplycal(myfile,mygaintables):
 
-        print('Running applycal...')        
+        print('\nRunning applycal...')        
         applycal(vis=myfile, field='0', gaintable=mygaintables, gainfield=['0'], applymode='calflag', 
                  interp=['linear'], calwt=False, parang=False)
 
 
-def flagresidual(myfile,myclipresid,myflagspw):
+def flagresidual(myfile,myclipresid,myflagspw, i):
 
-        print("Flagging residual data...")
+        # print("Flagging residual data...")
       
-        flagdata(vis=myfile, mode ='rflag', datacolumn="RESIDUAL_DATA", field='', timecutoff=6.0,  freqcutoff=6.0,
-                timefit="line", freqfit="line",        flagdimension="freqtime", extendflags=False, timedevscale=6.0,
-                freqdevscale=6.0, spectralmax=500.0, extendpols=False, growaround=False, flagneartime=False,
-                flagnearfreq=False, action="apply", flagbackup=True, overwrite=True, writeflags=True)
+        # flagdata(vis=myfile, mode ='rflag', datacolumn="RESIDUAL_DATA", field='', timecutoff=6.0,  freqcutoff=6.0,
+        #         timefit="line", freqfit="line",        flagdimension="freqtime", extendflags=False, timedevscale=6.0,
+        #         freqdevscale=6.0, spectralmax=500.0, extendpols=False, growaround=False, flagneartime=False,
+        #         flagnearfreq=False, action="apply", flagbackup=True, overwrite=True, writeflags=True)
       
-        flagdata(vis=myfile, mode ='clip', datacolumn="RESIDUAL_DATA", clipminmax=myclipresid,
-                clipoutside=True, clipzeros=True, field='', spw=myflagspw, extendflags=False,
-                extendpols=False, growaround=False, flagneartime=False,        flagnearfreq=False,
-                action="apply",        flagbackup=True, overwrite=True, writeflags=True)
+        # flagdata(vis=myfile, mode ='clip', datacolumn="RESIDUAL_DATA", clipminmax=myclipresid,
+        #         clipoutside=True, clipzeros=True, field='', spw=myflagspw, extendflags=False,
+        #         extendpols=False, growaround=False, flagneartime=False,        flagnearfreq=False,
+        #         action="apply",        flagbackup=True, overwrite=True, writeflags=True)
+
+        # if i == 0:
+        #         rfi_cleaner.reset(myfile)
       
-        flagdata(vis=myfile,mode="summary",datacolumn="RESIDUAL_DATA", extendflags=False, 
-                name=myfile+'temp.summary', action="apply", flagbackup=True,overwrite=True, writeflags=True)
+        rfi_cleaner.clean(myfile, field = 0, datacolumn = 'residual', use_gnet= False, join_scans= -1, nproc=16)
+
+        # flagdata(vis=myfile,mode="summary",datacolumn="RESIDUAL_DATA", extendflags=False, 
+                # name=myfile+'temp.summary', action="apply", flagbackup=True,overwrite=True, writeflags=True)
+
+        flagsummary(myfile)
+
       
 
 def myselfcal(myfile,myref,nloops,nploops,myvalinit,mysolint1,myclipresid,mygainspw2,mymakedirty,niterstart, uvrascal, wscommand):
@@ -205,7 +218,7 @@ def myselfcal(myfile,myref,nloops,nploops,myvalinit,mysolint1,myclipresid,mygain
                                 
                                         myimg = mywsclean(myfile[i],wscommand,myniter,mythresh,i)   # tclean
                                         myimages.append(myimg)        # list of all the images created so far
-                                        flagresidual(myfile[i],myclipresid,'')
+                                        flagresidual(myfile[i],myclipresid,'', i)
                                         if i>0:
                                                 myctables = mygaincal_ap(myfile[i],myref,mygt[i-1],i,mypap,mysolint1,uvrascal,mygainspw2)
                                         else:                                        
@@ -221,7 +234,7 @@ def myselfcal(myfile,myref,nloops,nploops,myvalinit,mysolint1,myclipresid,mygain
                                         
                                         myimg = mywsclean(myfile[i],wscommand,myniter,mythresh,i)   # tclean
                                         myimages.append(myimg)        # list of all the images created so far
-                                        flagresidual(myfile[i],myclipresid,'')
+                                        flagresidual(myfile[i],myclipresid,'', i)
                                         if i!= nscal:
                                                 myctables = mygaincal_ap(myfile[i],myref,mygt[i-1],i,mypap,mysolint1,'',mygainspw2)
                                                 mygt.append(myctables) # full list of gaintables

@@ -1,6 +1,6 @@
 import numpy as np
 from datetime import datetime
-from casatasks import clearcal
+from casatasks import clearcal, delmod
 
 from .ugfunctions import *
 import configparser
@@ -36,10 +36,11 @@ def main():
     wscommand = config.get('default','wsclean-command')
     uvrange = config.get('default','uvrange')
 
-    print("Starting uCAPTURE Imaging pipeline")
+    print("Starting Wsclean Imaging and Selfcal Pipeline")
     
     flagsummary(msfilename)
     clearcal(vis = msfilename)
+    delmod(vis = msfilename)
     myfile2 = [msfilename]
     myselfcal(myfile2,ref_ant,scaloops,pcaloops,mJythreshold,scalsolints,clipresid,"",False,niter_start, uvrange, wscommand)
 
