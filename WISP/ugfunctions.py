@@ -87,7 +87,7 @@ def myrflagavg(myfile,myfield, myants, mytimdev, myfdev,mydatcol,myflagspw):
         return
 
 
-def mywsclean(myfile,wscommand,myniter,mythresh,srno):    # you may change the multi-scale inputs as per your field
+def mywsclean(myfile,wscommand,myniter,srno):    # you may change the multi-scale inputs as per your field
         nameprefix = myfile.split('-selfcal')[0]
         nameprefix = nameprefix.split('.')[0]
         print("The image files have the following prefix =",nameprefix)
@@ -155,7 +155,7 @@ def myapplycal(myfile,mygaintables):
                  interp=['linear'], calwt=False, parang=False)
 
 
-def flagresidual(myfile,myclipresid,myflagspw, i):
+def flagresidual(myfile):
 
         # print("Flagging residual data...")
       
@@ -181,7 +181,7 @@ def flagresidual(myfile,myclipresid,myflagspw, i):
 
       
 
-def myselfcal(myfile,myref,nloops,nploops,myvalinit,mysolint1,myclipresid,mygainspw2,mymakedirty,niterstart, uvrascal, wscommand):
+def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty,niterstart, uvrascal, wscommand, skip_loops = False):
         myref = myref
         nscal = nloops # number of selfcal loops
         npal = nploops # number of phasecal loops
@@ -193,32 +193,37 @@ def myselfcal(myfile,myref,nloops,nploops,myvalinit,mysolint1,myclipresid,mygain
         if nscal == 0:
                 i = nscal
                 myniter = 0 # this is to make a dirty image
-                mythresh = str(myvalinit/(i+1))+'mJy'
+                # mythresh = str(myvalinit/(i+1))+'mJy'
                 print("Using "+ myfile[i]+" for making only an image.")
-                myimg = mywsclean(myfile[i],wscommand,myniter,mythresh,i)   # tclean
+                myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
                 exportfits(imagename=myimg+'.image.tt0', fitsimage=myimg+'.fits')
                 
         else:
                 for i in range(0,nscal+1): # plan 4 P and 4AP iterations
+
+                        # if os.path.exists(mygt[i-1]) and skip_loops:
+                        #         print("Gaintable "+mygt[i-1]+" exists, skipping selfcal loop{0}".format(i))
+                        #         continue
+
                         if mymakedirty == True:
                                 if i == 0:
                                         myniter = 0 # this is to make a dirty image
-                                        mythresh = str(myvalinit/(i+1))+'mJy'
+                                        # mythresh = str(myvalinit/(i+1))+'mJy'
                                         print("Using "+ myfile[i]+" for making only a dirty image.")
-                                        myimg = mywsclean(myfile[i],wscommand,myniter,mythresh,i)   # tclean
+                                        myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
 
                         else:
                                 myniter=int(myniterstart*2**i) #myniterstart*(2**i)  # niter is doubled with every iteration int(startniter*2**count)
                                 if myniter > myniterend:
                                         myniter = myniterend
-                                mythresh = str(myvalinit/(i+1))+'mJy'
+                                # mythresh = str(myvalinit/(i+1))+'mJy'
                                 if i < npal:
                                         mypap = 'p'
 #                                        print("Using "+ myfile[i]+" for imaging.")
                                 
-                                        myimg = mywsclean(myfile[i],wscommand,myniter,mythresh,i)   # tclean
+                                        myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
                                         myimages.append(myimg)        # list of all the images created so far
-                                        flagresidual(myfile[i],myclipresid,'', i)
+                                        flagresidual(myfile[i])
                                         if i>0:
                                                 myctables = mygaincal_ap(myfile[i],myref,mygt[i-1],i,mypap,mysolint1,uvrascal,mygainspw2)
                                         else:                                        
@@ -232,9 +237,9 @@ def myselfcal(myfile,myref,nloops,nploops,myvalinit,mysolint1,myclipresid,mygain
                                         mypap = 'ap'
 #                                        print("Using "+ myfile[i]+" for imaging.")
                                         
-                                        myimg = mywsclean(myfile[i],wscommand,myniter,mythresh,i)   # tclean
+                                        myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
                                         myimages.append(myimg)        # list of all the images created so far
-                                        flagresidual(myfile[i],myclipresid,'', i)
+                                        flagresidual(myfile[i])
                                         if i!= nscal:
                                                 myctables = mygaincal_ap(myfile[i],myref,mygt[i-1],i,mypap,mysolint1,'',mygainspw2)
                                                 mygt.append(myctables) # full list of gaintables
@@ -243,10 +248,10 @@ def myselfcal(myfile,myref,nloops,nploops,myvalinit,mysolint1,myclipresid,mygain
                                                         myoutfile= mysplit(myfile[i],i)
                                                         myfile.append(myoutfile)
 #                                print("Visibilities from the previous selfcal will be deleted.")
-                                print("Visibilities from the previous selfcal will be deleted.")
                                 if i < nscal and i != 0:
                                         # fprefix = myfile[i].split('.')[0]
                                         # myoldvis = fprefix+'-selfcal'+str(i-1)+'.ms'
+                                        print("Visibilities from the previous selfcal will be deleted.")
                                         myoldvis = myfile[i]    
                                         print("Deleting "+str(myoldvis))
                                         os.system('rm -rf '+str(myoldvis)+ '*')
