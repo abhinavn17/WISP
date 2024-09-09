@@ -19,13 +19,6 @@ def main():
     
     msfilename =config.get('default','msfilename')
     ref_ant = config.get('default','ref_ant')
-    # clipfluxcal = [float(config.get('default','clipfluxcal').split(',')[0]),float(config.get('default','clipfluxcal').split(',')[1])]
-    # clipphasecal =[float(config.get('default','clipphasecal').split(',')[0]),float(config.get('default','clipphasecal').split(',')[1])]
-    # cliptarget =[float(config.get('default','cliptarget').split(',')[0]),float(config.get('default','cliptarget').split(',')[1])]   
-    # clipresid=[float(config.get('default','clipresid').split(',')[0]),float(config.get('default','clipresid').split(',')[1])]
-    # # imcellsize = [config.get('default','imcellsize')]
-    # imsize_pix = int(config.get('default','imsize_pix'))
-    # clean_robust = float(config.get('default','clean_robust'))
     scaloops = config.getint('default','scaloops')
     # mJythreshold = float(config.get('default','mJythreshold'))
     pcaloops = config.getint('default','pcaloops')
@@ -35,14 +28,16 @@ def main():
     # nwprojpl = config.getint('default','nwprojpl')
     wscommand = config.get('default','wsclean-command')
     uvrange = config.get('default','uvrange')
+    join_scans = config.getfloat('default','join_scans')
+    nproc = config.getint('default','nproc')
 
     print("Starting Wsclean Imaging and Selfcal Pipeline")
     
-    flagsummary(msfilename)
+    # flagsummary(msfilename)
     clearcal(vis = msfilename)
     delmod(vis = msfilename)
     myfile2 = [msfilename]
-    myselfcal(myfile2,ref_ant,scaloops,pcaloops,scalsolints,"",False,niter_start, uvrange, wscommand)
+    myselfcal(myfile2,ref_ant,scaloops,pcaloops,scalsolints,"",False,niter_start, uvrange, wscommand, join_scans, nproc)
 
 
 if __name__ == '__main__':
