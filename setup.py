@@ -16,8 +16,8 @@ setup(
     install_requires=requirements,
     entry_points={
         'console_scripts': [
-            'wisp = WISP.__main__:main',
-            'make_ini = WISP.make_ini:main'
+            'wisp = wisp.__main__:main',
+            'make_ini = wisp.make_ini:main'
         ]
     },
     include_package_data=True
