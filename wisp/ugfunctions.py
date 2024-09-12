@@ -1,7 +1,14 @@
 from casatasks import gaincal, fluxscale, flagdata, mstransform, applycal, exportfits
 import subprocess
 import os
-import gnet.gnet.rfi_cleaner as rfi_cleaner
+
+try:
+        import gnet.gnet.rfi_cleaner as rfi_cleaner
+        use_gnet = True
+except ImportError:
+        use_gnet = False
+        print("gnet not installed. Defaulting to casa rflag for residual flagging.")
+        pass
 
 def flagsummary(myfile):
        
@@ -97,15 +104,27 @@ def myapplycal(myfile,mygaintables):
                  interp=['linear'], calwt=False, parang=False)
 
 
-def flagresidual(myfile, join_scans = -1, nproc = 16):
-      
-        rfi_cleaner.clean(myfile, field = 0, datacolumn = 'residual', use_gnet= False, join_scans= join_scans, nproc=nproc)
+def flagresidual(myfile, myclipresid, join_scans = -1, nproc = 16):
 
+        if use_gnet:
+
+                rfi_cleaner.clean(myfile, field = 0, datacolumn = 'residual', use_gnet= True, join_scans= join_scans, nproc=nproc)
+        else:
+
+                flagdata(vis=myfile, mode ='rflag', datacolumn="RESIDUAL_DATA", field='', timecutoff=6.0,  freqcutoff=6.0,
+                        timefit="line", freqfit="line",        flagdimension="freqtime", extendflags=False, timedevscale=6.0,
+                        freqdevscale=6.0, spectralmax=500.0, extendpols=False, growaround=False, flagneartime=False,
+                        flagnearfreq=False, action="apply", flagbackup=True, overwrite=True, writeflags=True)
+                flagdata(vis=myfile, mode ='clip', datacolumn="RESIDUAL_DATA", clipminmax=myclipresid,
+                        clipoutside=True, clipzeros=True, field='', spw='', extendflags=False,
+                        extendpols=False, growaround=False, flagneartime=False,        flagnearfreq=False,
+                        action="apply",        flagbackup=True, overwrite=True, writeflags=True)
+        
         flagsummary(myfile)
 
       
 
-def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty,niterstart, uvrascal, wscommand, join_scans, nproc):
+def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty,niterstart, uvrascal, myclipresid, wscommand, join_scans, nproc):
         myref = myref
         nscal = nloops # number of selfcal loops
         npal = nploops # number of phasecal loops
@@ -144,7 +163,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty,niter
                                 
                                         myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
                                         myimages.append(myimg)        # list of all the images created so far
-                                        flagresidual(myfile[i], join_scans, nproc)
+                                        flagresidual(myfile[i], myclipresid, join_scans, nproc)
                                         if i>0:
                                                 myctables = mygaincal_ap(myfile[i],myref,mygt[i-1],i,mypap,mysolint1,uvrascal,mygainspw2)
                                         else:                                        
@@ -160,7 +179,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty,niter
                                         
                                         myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
                                         myimages.append(myimg)        # list of all the images created so far
-                                        flagresidual(myfile[i], join_scans, nproc)
+                                        flagresidual(myfile[i], myclipresid, join_scans, nproc)
                                         if i!= nscal:
                                                 myctables = mygaincal_ap(myfile[i],myref,mygt[i-1],i,mypap,mysolint1,'',mygainspw2)
                                                 mygt.append(myctables) # full list of gaintables

@@ -21,6 +21,7 @@ def main():
     ref_ant = config.get('default','ref_ant')
     scaloops = config.getint('default','scaloops')
     # mJythreshold = float(config.get('default','mJythreshold'))
+    clipresid = config.getfloat('default','clipresid')
     pcaloops = config.getint('default','pcaloops')
     scalsolints = config.get('default','scalsolints').split(',')
     niter_start = int(config.get('default','niter_start'))
@@ -37,7 +38,7 @@ def main():
     clearcal(vis = msfilename)
     delmod(vis = msfilename)
     myfile2 = [msfilename]
-    myselfcal(myfile2,ref_ant,scaloops,pcaloops,scalsolints,"",False,niter_start, uvrange, wscommand, join_scans, nproc)
+    myselfcal(myfile2,ref_ant,scaloops,pcaloops,scalsolints,"",False,niter_start, uvrange, clipresid, wscommand, join_scans, nproc)
 
 
 if __name__ == '__main__':
