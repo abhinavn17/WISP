@@ -21,7 +21,7 @@ def main():
     ref_ant = config.get('default','ref_ant')
     scaloops = config.getint('default','scaloops')
     # mJythreshold = float(config.get('default','mJythreshold'))
-    clipresid = config.getfloat('default','clipresid')
+    clipresid = config.get('default','clipresid')
     pcaloops = config.getint('default','pcaloops')
     scalsolints = config.get('default','scalsolints').split(',')
     niter_start = int(config.get('default','niter_start'))

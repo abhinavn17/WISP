@@ -1,6 +1,6 @@
 # WISP
 
-Wsclean Imaging and Selfcal Pipeline is a selfcal and imaging pipeline developed for radio interforemtric imaging. The selfcal loop utilises modular CASA and is taken from CAPTURE-CASA6, written by Ruta Kale. This pipeline utilizes WSClean for ridiculous speedup of imaging. It requires cleaned and calibrated msfiles as input.
+Wsclean Imaging and Selfcal Pipeline is a selfcal and imaging pipeline developed for radio interferometric imaging. The selfcal loop utilises modular CASA and is taken from CAPTURE-CASA6, written by Ruta Kale. This pipeline utilizes WSClean for ridiculous speedup of imaging. It requires cleaned and calibrated msfiles as input.
 
 To run this pipeline, you need to build and install wsclean. The wsclean terminal command is passed as a subprocess call, and the specific imaging parameters can be passed as a "wsclean-command" in the config.ini file.
 

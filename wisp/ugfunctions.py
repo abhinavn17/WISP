@@ -108,7 +108,7 @@ def flagresidual(myfile, myclipresid, join_scans = -1, nproc = 16):
 
         if use_gnet:
 
-                rfi_cleaner.clean(myfile, field = 0, datacolumn = 'residual', use_gnet= True, join_scans= join_scans, nproc=nproc)
+                rfi_cleaner.clean(myfile, field = 0, datacolumn = 'residual', use_gnet= False, join_scans= join_scans, nproc=nproc)
         else:
 
                 flagdata(vis=myfile, mode ='rflag', datacolumn="RESIDUAL_DATA", field='', timecutoff=6.0,  freqcutoff=6.0,
