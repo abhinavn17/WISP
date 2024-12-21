@@ -1,6 +1,7 @@
 from casatasks import gaincal, fluxscale, flagdata, mstransform, applycal, exportfits
 import subprocess
 import os
+from wisp.makesubband import makesubbands
 
 try:
         import gnet.gnet.rfi_cleaner as rfi_cleaner
@@ -50,7 +51,7 @@ def mywsclean(myfile,wscommand,myniter,srno):    # you may change the multi-scal
         command.extend(['-niter', str(myniter), '-name', myoutimg, myfile])
 
         # command = ['wsclean', '-j', '64', '-name', f'{myoutimg}', '-size', f'{imsize}', f'{imsize}', '-scale', '1asec', '-weight', 'briggs', f'{clean_robust}', '-niter', f'{myniter}', '-mgain', '0.8', '-auto-mask', '3', '-auto-threshold', '0.3', '-multiscale', '-multiscale-scales', '0,5,15', '-channels-out', '2', '-join-channels', '-pol', 'i', f'{myfile}']
-        
+
         subprocess.call(command)
 
         return myoutimg
@@ -124,7 +125,7 @@ def flagresidual(myfile, myclipresid, join_scans = -1, nproc = 16):
 
       
 
-def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty,niterstart, uvrascal, myclipresid, wscommand, join_scans, nproc):
+def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsubbands, niterstart, uvrascal, myclipresid, wscommand, join_scans, nproc):
         myref = myref
         nscal = nloops # number of selfcal loops
         npal = nploops # number of phasecal loops
@@ -132,6 +133,15 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty,niter
         myimages=[]
         mygt=[]
         myniterstart = niterstart
+        # print(myfile)
+
+        if nsubbands > 1:
+                print("Making subbands...")
+                myfile = makesubbands(myfile[0], nsubbands)
+                myfile = [myfile]
+                # print(myfile)
+                # mygainspw2 = mysubbands[1]
+
         if nscal == 0:
                 i = nscal
                 myniter = 0 # this is to make a dirty image
@@ -180,13 +190,17 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty,niter
                                         myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
                                         myimages.append(myimg)        # list of all the images created so far
                                         flagresidual(myfile[i], myclipresid, join_scans, nproc)
-                                        if i!= nscal:
+                                        if i==0:
+                                                myctables = mygaincal_ap(myfile[i],myref,mygt,i,mypap,mysolint1,uvrascal,mygainspw2)
+                                                
+                                        elif i!= nscal:
+                                               
                                                 myctables = mygaincal_ap(myfile[i],myref,mygt[i-1],i,mypap,mysolint1,'',mygainspw2)
-                                                mygt.append(myctables) # full list of gaintables
-                                                if i < nscal+1:
-                                                        myapplycal(myfile[i],mygt[i])
-                                                        myoutfile= mysplit(myfile[i],i)
-                                                        myfile.append(myoutfile)
+                                        mygt.append(myctables) # full list of gaintables
+                                        if i < nscal:
+                                                myapplycal(myfile[i],mygt[i])
+                                                myoutfile= mysplit(myfile[i],i)
+                                                myfile.append(myoutfile)
 #                                print("Visibilities from the previous selfcal will be deleted.")
                                 if i < nscal and i != 0:
                                         # fprefix = myfile[i].split('.')[0]

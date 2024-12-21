@@ -27,6 +27,7 @@ def main():
     niter_start = int(config.get('default','niter_start'))
     # use_nterms = config.getint('default','use_nterms')
     # nwprojpl = config.getint('default','nwprojpl')
+    nsubbands = config.getint('default','nsubbands')
     wscommand = config.get('default','wsclean-command')
     uvrange = config.get('default','uvrange')
     join_scans = config.getfloat('default','join_scans')
@@ -35,10 +36,10 @@ def main():
     print("Starting Wsclean Imaging and Selfcal Pipeline")
     
     # flagsummary(msfilename)
-    clearcal(vis = msfilename)
-    delmod(vis = msfilename)
+    # clearcal(vis = msfilename)
+    # delmod(vis = msfilename)
     myfile2 = [msfilename]
-    myselfcal(myfile2,ref_ant,scaloops,pcaloops,scalsolints,"",False,niter_start, uvrange, clipresid, wscommand, join_scans, nproc)
+    myselfcal(myfile2,ref_ant,scaloops,pcaloops,scalsolints,"",False,nsubbands,niter_start, uvrange, clipresid, wscommand, join_scans, nproc)
 
 
 if __name__ == '__main__':
