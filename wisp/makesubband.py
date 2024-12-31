@@ -15,4 +15,4 @@ def makesubbands(myfile,newfile,nsubbands):
 
 if __name__ == '__main__':
 
-    makesubbands(sys.argv[1], sys.argv[2], sys.argv[3])
+    makesubbands(sys.argv[1], sys.argv[2], int(sys.argv[3]))
