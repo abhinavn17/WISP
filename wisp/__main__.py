@@ -33,6 +33,11 @@ def main():
     join_scans = config.getfloat('default','join_scans')
     nproc = config.getint('default','nproc')
 
+    try:
+        use_gnet = config.getboolean('default','use_gnet')
+    except:
+        use_gnet = True
+
     print("Starting Wsclean Imaging and Selfcal Pipeline")
     
     # flagsummary(msfilename)
