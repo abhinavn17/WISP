@@ -8,8 +8,8 @@ import os
 from casatasks import mstransform
 
 def makesubbands(myfile,newfile,nsubbands):
-
-        mstransform(vis=myfile,outputvis=newfile, datacolumn='DATA',regridms=True, nspw=nsubbands, combinespws= False, keepflags=True)
+        
+        mstransform(vis=myfile, outputvis=newfile, datacolumn='DATA',regridms=True, nspw=nsubbands, keepflags=True)
                 
         return newfile
 

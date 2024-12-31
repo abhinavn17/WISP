@@ -137,7 +137,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
 
                 subband_file = myfile.split('.ms')[0]+'_subbands.ms'
                 
-                subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.makesubband', f'{myfile[0]}', f'{subband_file}', f'{nsubbands}'])
+                subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.makesubband', f'{myfile}', f'{subband_file}', f'{nsubbands}'])
 
                 myfile = [subband_file]
 
