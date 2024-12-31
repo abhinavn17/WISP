@@ -17,6 +17,7 @@ flagdata(vis=myfile, mode ='rflag', datacolumn="RESIDUAL_DATA", field='', timecu
                         timefit="line", freqfit="line",        flagdimension="freqtime", extendflags=False, timedevscale=6.0,
                         freqdevscale=6.0, spectralmax=500.0, extendpols=False, growaround=False, flagneartime=False,
                         flagnearfreq=False, action="apply", flagbackup=True, overwrite=True, writeflags=True)
+
 flagdata(vis=myfile, mode ='clip', datacolumn="RESIDUAL_DATA", clipminmax=myclipresid,
                         clipoutside=True, clipzeros=True, field='', spw='', extendflags=False,
                         extendpols=False, growaround=False, flagneartime=False,        flagnearfreq=False,
