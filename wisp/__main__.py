@@ -34,7 +34,9 @@ def main():
     nproc = config.getint('default','nproc')
 
     try:
-        use_gnet = config.getboolean('default','use_gnet')
+        use_gnet = config.getint('default','use_gnet')
+        if use_gnet == 0:
+            use_gnet = False
     except:
         use_gnet = True
 
@@ -44,7 +46,7 @@ def main():
     # clearcal(vis = msfilename)
     # delmod(vis = msfilename)
     myfile2 = [msfilename]
-    myselfcal(myfile2,ref_ant,scaloops,pcaloops,scalsolints,"",False,nsubbands,niter_start, uvrange, clipresid, wscommand, join_scans, nproc)
+    myselfcal(myfile2,ref_ant,scaloops,pcaloops,scalsolints,"",False,nsubbands,niter_start, uvrange, clipresid, wscommand, join_scans, nproc, use_gnet)
 
 
 if __name__ == '__main__':
