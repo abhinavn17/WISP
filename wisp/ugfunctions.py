@@ -109,7 +109,7 @@ def flagresidual(myfile, gnet, myclipresid, join_scans = -1, nproc = 16):
 
         if gnet:
 
-                rfi_cleaner.clean(myfile, field = 0, datacolumn = 'residual', use_gnet= False, join_scans= join_scans, nproc=nproc)
+                rfi_cleaner.clean(myfile, field = 0, datacolumn = 'residual', use_gnet= False, join_scans= join_scans, nproc=nproc, extend=False)
         else:
 
                 print("Running residual flagging using rflag...")
