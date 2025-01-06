@@ -7,7 +7,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='WISP',  
-    version='0.1.0',  
+    version='0.2.0',  
     author='Abhinav Narayan',
     description='WSCLEAN Imaging and Selfcal Pipeline for GMRT and uGMRT data',
     long_description=open('README.md').read(),
@@ -17,7 +17,8 @@ setup(
     entry_points={
         'console_scripts': [
             'wisp = wisp.__main__:main',
-            'make_ini = wisp.make_ini:main'
+            'make_ini = wisp.make_ini:main',
+            'wsnap = wisp.wsnap:main'
         ]
     },
     include_package_data=True

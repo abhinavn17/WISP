@@ -50,8 +50,6 @@ def mywsclean(myfile,wscommand,myniter,srno):    # you may change the multi-scal
 
         command.extend(['-niter', str(myniter), '-name', myoutimg, myfile])
 
-        # command = ['wsclean', '-j', '64', '-name', f'{myoutimg}', '-size', f'{imsize}', f'{imsize}', '-scale', '1asec', '-weight', 'briggs', f'{clean_robust}', '-niter', f'{myniter}', '-mgain', '0.8', '-auto-mask', '3', '-auto-threshold', '0.3', '-multiscale', '-multiscale-scales', '0,5,15', '-channels-out', '2', '-join-channels', '-pol', 'i', f'{myfile}']
-
         subprocess.call(command)
 
         return myoutimg
