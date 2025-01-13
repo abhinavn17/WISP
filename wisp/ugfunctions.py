@@ -1,4 +1,4 @@
-from casatasks import gaincal, fluxscale, flagdata, mstransform, applycal, exportfits
+from casatasks import gaincal, fluxscale, flagdata, split, applycal, exportfits
 import subprocess
 import os
 from wisp.makesubband import makesubbands
@@ -67,7 +67,7 @@ def mysplit(myfile,srno):
                 print("File "+myoutvis+" already exists. Deleting it.")
                 os.system(f'rm -rf {myoutvis}*') 
       
-        mstransform(vis=myfile, field='0', spw='', datacolumn='corrected', outputvis=myoutvis)
+        split(vis=myfile, field='0', datacolumn='corrected', outputvis=myoutvis, keepmms=True)
         return myoutvis
 
 def mygaincal_ap(myfile,myref,mygtable,srno,pap,mysolint,myuvrascal,mygainspw):
