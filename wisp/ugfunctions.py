@@ -26,17 +26,6 @@ def flagsummary(myfile):
                 except AttributeError:
                         pass
 
-
-def mygaincal_ap_redo(myfile,mycal,myref,myflagspw,myuvracal):
-   
-        gtable = [str(myfile)+'.K1'+'recal', str(myfile)+'.B1'+'recal' ]
-        gaincal(vis=myfile, caltable=str(myfile)+'.AP.G.'+'recal', append=True, spw =myflagspw, uvrange=myuvracal,
-                field=mycal,solint = '120s',refant = myref, minsnr = 2.0,solmode ='L1R', gaintype = 'G', calmode = 'ap',
-                gaintable = gtable, interp = ['nearest,nearestflag', 'nearest,nearestflag' ], parang = True )
-        return gtable
-
-
-
 def mywsclean(myfile,wscommand,myniter,srno):    # you may change the multi-scale inputs as per your field
         nameprefix = myfile.split('-selfcal')[0]
         nameprefix = nameprefix.split('.')[0]
@@ -55,7 +44,7 @@ def mywsclean(myfile,wscommand,myniter,srno):    # you may change the multi-scal
         return myoutimg
 
 
-def mysplit(myfile,srno):
+def mysplit(myfile, mygaintables, srno):
 
         filname_pre = myfile.split('-selfcal')[0]
         filname_pre = filname_pre.split('.')[0]     
@@ -67,10 +56,12 @@ def mysplit(myfile,srno):
                 print("File "+myoutvis+" already exists. Deleting it.")
                 os.system(f'rm -rf {myoutvis}*') 
       
-        split(vis=myfile, field='0', datacolumn='corrected', outputvis=myoutvis, keepmms=True)
+        # split(vis=myfile, field='0', datacolumn='corrected', outputvis=myoutvis, keepmms=True)
+
+        subprocess.call(['mpirun', '-np', '32', 'python', '-m', 'wisp.applycal', f'{myfile}', f'{mygaintables}', f'{srno}'])
         return myoutvis
 
-def mygaincal_ap(myfile,myref,mygtable,srno,pap,mysolint,myuvrascal,mygainspw):
+def mygaincal_ap(myfile,myref,srno,pap,mysolint,myuvrascal,mygainspw):
 
         print("\nRunning gaincal...")
 
@@ -88,9 +79,9 @@ def mygaincal_ap(myfile,myref,mygtable,srno,pap,mysolint,myuvrascal,mygainspw):
                 os.system('rm -rf '+fprefix+str(pap)+str(srno)+'.GT')
 
         gaincal(vis=myfile, caltable=fprefix+str(pap)+str(srno)+'.GT', append=False, field='0', spw=mygainspw,
-                uvrange=myuvrascal, solint = mysol, refant = myref, minsnr = 2.0,solmode='L1R', gaintype = 'G',
+                uvrange=myuvrascal, solint = mysol, refant = myref, minsnr = 2.0, solmode='L1R', gaintype = 'G',
                 solnorm= mysolnorm, calmode = mycalmode, gaintable = [], interp = ['nearest,nearestflag', 'nearest,nearestflag' ], 
-                parang = True , combine='scan')
+                parang = True )
         mycal = fprefix+str(pap)+str(srno)+'.GT'
         return mycal
 
@@ -114,8 +105,27 @@ def flagresidual(myfile, gnet, myclipresid, join_scans = -1, nproc = 16):
 
                 subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.rflag', f'{myfile}', f'{myclipresid}'])
         
+        flagdata(vis=myfile, mode='clip', clipminmax=[0, 0.75], datacolumn= 'RESIDUAL_DATA')
+        flagdata(vis=myfile, mode='extend', extendpols=False, growtime=75, growfreq=75, growaround=True)
+        
         flagsummary(myfile)
 
+def final_split(myfile):
+
+        filname_pre = myfile.split('-selfcal')[0]
+        filname_pre = filname_pre.split('.')[0]     
+        myoutvis=filname_pre+'-spw_joined.ms'
+
+        print("Splitting into "+myoutvis + "...")
+
+        if os.path.exists(myoutvis):
+
+                print("File "+myoutvis+" already exists. Deleting it.")
+                os.system(f'rm -rf {myoutvis}*')
+        
+        subprocess.call(['mpirun', '-np', '32', 'python', '-m', 'wisp.makesubband', f'{myfile}', f'{myoutvis}'])
+
+        return myoutvis
       
 
 def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsubbands, niterstart, uvrascal, myclipresid, wscommand, join_scans, nproc, use_gnet = True):
@@ -152,7 +162,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                 exportfits(imagename=myimg+'.image.tt0', fitsimage=myimg+'.fits')
                 
         else:
-                for i in range(0,nscal+1): # plan 4 P and 4AP iterations
+                for i in range(0,nscal+1): 
 
                         # if os.path.exists(mygt[i-1]) and skip_loops:
                         #         print("Gaintable "+mygt[i-1]+" exists, skipping selfcal loop{0}".format(i))
@@ -166,50 +176,43 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                                         myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
 
                         else:
-                                myniter=int(myniterstart*2**i) #myniterstart*(2**i)  # niter is doubled with every iteration int(startniter*2**count)
-                                # mythresh = str(myvalinit/(i+1))+'mJy'
+                                myniter=int(myniterstart*2**i) #myniterstart*(2**i)  # niter is doubled with every iteration int
+
                                 if i < npal:
-                                        mypap = 'p'
-#                                        print("Using "+ myfile[i]+" for imaging.")
-                                
-                                        myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
-                                        myimages.append(myimg)        # list of all the images created so far
-                                        flagresidual(myfile[i], use_gnet, myclipresid, join_scans, nproc)
-                                        if i>0:
-                                                myctables = mygaincal_ap(myfile[i],myref,mygt[i-1],i,mypap,mysolint1,uvrascal,mygainspw2)
-                                        else:                                        
-                                                myctables = mygaincal_ap(myfile[i],myref,mygt,i,mypap,mysolint1,uvrascal,mygainspw2)                                                
-                                        mygt.append(myctables) # full list of gaintables
-                                        if i < nscal+1:
-                                                myapplycal(myfile[i],mygt[i])
-                                                myoutfile= mysplit(myfile[i],i)
-                                                myfile.append(myoutfile)
+                                        mypap = 'p'       
                                 else:
                                         mypap = 'ap'
-#                                        print("Using "+ myfile[i]+" for imaging.")
-                                        
-                                        myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
-                                        myimages.append(myimg)        # list of all the images created so far
-                                        flagresidual(myfile[i], use_gnet, myclipresid, join_scans, nproc)
-                                        if i==0:
-                                                myctables = mygaincal_ap(myfile[i],myref,mygt,i,mypap,mysolint1,uvrascal,mygainspw2)
-                                                
-                                        elif i!= nscal:
-                                               
-                                                myctables = mygaincal_ap(myfile[i],myref,mygt[i-1],i,mypap,mysolint1,'',mygainspw2)
-                                        mygt.append(myctables) # full list of gaintables
-                                        if i < nscal:
-                                                myapplycal(myfile[i],mygt[i])
-                                                myoutfile= mysplit(myfile[i],i)
-                                                myfile.append(myoutfile)
-#                                print("Visibilities from the previous selfcal will be deleted.")
-                                if i < nscal and i != 0:
-                                        # fprefix = myfile[i].split('.')[0]
-                                        # myoldvis = fprefix+'-selfcal'+str(i-1)+'.ms'
-                                        print("Visibilities from the previous selfcal will be deleted.")
-                                        myoldvis = myfile[i]    
-                                        print("Deleting "+str(myoldvis))
-                                        os.system('rm -rf '+str(myoldvis)+ '*')
-#                        print('Ran the selfcal loop')
+#                                       
+                                myimg = mywsclean(myfile[i],wscommand,myniter,i)   # wsclean
+                                myimages.append(myimg)        # list of all the images created so far
+                                flagresidual(myfile[i], use_gnet, myclipresid, join_scans, nproc)
+                                # full list of gaintables
+                                
+                                if i < nscal:
+
+                                        myctables = mygaincal_ap(myfile[i],myref,i,mypap,mysolint1,uvrascal,mygainspw2)
+                                        mygt.append(myctables) 
+                                        # myapplycal(myfile[i],mygt[i])
+                                        myoutfile = mysplit(myfile[i], mygt[i], i)
+                                        myfile.append(myoutfile)
+
+                                        if i != 0:
+                 
+                                                print("Visibilities from the previous selfcal will be deleted.")
+                                                myoldvis = myfile[i]    
+                                                print("Deleting "+str(myoldvis))
+                                                os.system('rm -rf '+str(myoldvis)+ '*')
+
+                                elif i == nscal:
+
+                                        myoutfile = final_split(myfile[i])
+                                        myimg = mywsclean(myoutfile,wscommand,myniter,i)
+                                        flagresidual(myoutfile, use_gnet, myclipresid, join_scans, nproc)
+                                        mypap = 'ap'
+                                        myctables = mygaincal_ap(myoutfile,myref,i-1,mypap,mysolint1,uvrascal,mygainspw2)
+                                        mygt.append(myctables)
+
+                                        mysplit(myoutfile, mygt[i], i)
+
         return myfile, mygt, myimages
 

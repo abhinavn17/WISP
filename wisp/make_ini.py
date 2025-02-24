@@ -9,7 +9,7 @@ def main():
 
     argparser = argparse.ArgumentParser(description='Create a configuration file for GNET calibration pipeline.')
 
-    argparser.add_argument('--cfgfile', '-c',  type=str, default= 'def.ini', help='output configuration file name for calibration.')
+    argparser.add_argument('--cfgfile', '-c',  type=str, default= 'wisp.ini', help='output configuration file name for calibration.')
     argparser.add_argument('msfile', type=str, help='Measurement set file to be calibrated.')
 
     args = argparser.parse_args()

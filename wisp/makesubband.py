@@ -13,6 +13,15 @@ def makesubbands(myfile,newfile,nsubbands):
                 
         return newfile
 
+def joinsubbands(myfiles,newfile):
+        
+        mstransform(vis=myfiles, outputvis=newfile, datacolumn='DATA',regridms=False, keepflags=True, combinespws=True)
+                
+        return newfile
+
 if __name__ == '__main__':
 
-    makesubbands(sys.argv[1], sys.argv[2], int(sys.argv[3]))
+    if len(sys.argv) == 4:
+        makesubbands(sys.argv[1], sys.argv[2], int(sys.argv[3]))
+    elif len(sys.argv) == 3:
+        joinsubbands(sys.argv[1], sys.argv[2])
