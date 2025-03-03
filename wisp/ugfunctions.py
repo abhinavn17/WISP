@@ -105,8 +105,8 @@ def flagresidual(myfile, gnet, myclipresid, join_scans = -1, nproc = 16):
 
                 subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.rflag', f'{myfile}', f'{myclipresid}'])
         
-        flagdata(vis=myfile, mode='clip', clipminmax=[0, 0.75], datacolumn= 'RESIDUAL_DATA')
-        flagdata(vis=myfile, mode='extend', extendpols=False, growtime=75, growfreq=75, growaround=True)
+        # flagdata(vis=myfile, mode='clip', clipminmax=[0, 0.75], datacolumn= 'RESIDUAL_DATA')
+        # flagdata(vis=myfile, mode='extend', extendpols=False, growtime=75, growfreq=75, growaround=True)
         
         flagsummary(myfile)
 

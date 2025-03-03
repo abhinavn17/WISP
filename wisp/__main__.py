@@ -34,9 +34,7 @@ def main():
     nproc = config.getint('default','nproc')
 
     try:
-        use_gnet = config.getint('default','use_gnet')
-        if use_gnet == 0:
-            use_gnet = False
+        use_gnet = config.getboolean('default','use_gnet')
     except:
         use_gnet = True
 
