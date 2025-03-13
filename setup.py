@@ -17,7 +17,7 @@ setup(
     entry_points={
         'console_scripts': [
             'wisp = wisp.__main__:main',
-            'wisp_ini = wisp.make_ini:main',
+            'wisp_config = wisp.make_ini:main',
             'wsnap = wisp.wsnap:main'
         ]
     },
