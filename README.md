@@ -15,7 +15,7 @@ pip install .
 2. To run you need to make a config.ini file. It can be made using:
 
 ```bash 
-make_ini -c <config.ini name> <msfile>
+wisp_config -c <config.ini name> <msfile>
 ```
 
 3. Edit the parameters in the config file to your use case.
