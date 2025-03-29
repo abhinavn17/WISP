@@ -37,6 +37,15 @@ def main():
 
     if not os.path.exists(outdir):
         os.makedirs(outdir)
+        run_imaging = True
+    else:
+        ask = input(f'{outdir} already exists. Do you want to overwrite it? (y/n): ')
+        if ask == 'y':
+            os.system(f'rm -rf {outdir}')
+            os.makedirs(outdir)
+            run_imaging = True
+        else:
+            run_imaging = False
 
     msmd = msmetadata()
     msmd.open(msfile)
@@ -50,20 +59,23 @@ def main():
 
     msmd.close()
 
-    nsteps = ntimes // delta
 
-    wsclean_command = ['wsclean', '-j', f'{nprocs}',  '-size', f'{imsize[0]}', f'{imsize[1]}', '-scale', f'{cell}asec', '-weight', 'uniform', '-niter', f'{niter}', '-mgain', '0.8', '-auto-mask', '3', '-auto-threshold', '0.3', '-intervals-out', f'{nsteps}', '-name', f'{outdir}/{msfilename}', msfile]
+    if run_imaging:
 
-    subprocess.run(wsclean_command)
+        nsteps = ntimes // delta
 
-    for file in glob.glob(f'{outdir}/*-dirty.fits'):
-        os.remove(file)
-    for file in glob.glob(f'{outdir}/*-psf.fits'):
-        os.remove(file)
-    for file in glob.glob(f'{outdir}/*-model.fits'):
-        os.remove(file)
-    for file in glob.glob(f'{outdir}/*-residual.fits'):
-        os.remove(file)
+        wsclean_command = ['wsclean', '-j', f'{nprocs}',  '-size', f'{imsize[0]}', f'{imsize[1]}', '-scale', f'{cell}asec', '-weight', 'uniform', '-niter', f'{niter}', '-mgain', '0.8', '-auto-mask', '3', '-auto-threshold', '0.3', '-intervals-out', f'{nsteps}', '-name', f'{outdir}/{msfilename}', msfile]
+
+        subprocess.run(wsclean_command)
+
+        for file in glob.glob(f'{outdir}/*-dirty.fits'):
+            os.remove(file)
+        for file in glob.glob(f'{outdir}/*-psf.fits'):
+            os.remove(file)
+        for file in glob.glob(f'{outdir}/*-model.fits'):
+            os.remove(file)
+        for file in glob.glob(f'{outdir}/*-residual.fits'):
+            os.remove(file)
 
     snapshot_join(outdir, f'{workdir}/{msfilename}_snapshot.fits', integration_time*delta)
 
