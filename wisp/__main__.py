@@ -41,7 +41,7 @@ def main():
     print("Starting Wsclean Imaging and Selfcal Pipeline")
     
     # flagsummary(msfilename)
-    # clearcal(vis = msfilename)
+    clearcal(vis = msfilename)
     # delmod(vis = msfilename)
     myfile2 = [msfilename]
     myselfcal(myfile2,ref_ant,scaloops,pcaloops,scalsolints,"",False,nsubbands,niter_start, uvrange, clipresid, wscommand, join_scans, nproc, use_gnet)
