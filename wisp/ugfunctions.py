@@ -1,4 +1,4 @@
-from casatasks import gaincal, fluxscale, flagdata, split, applycal, exportfits
+from casatasks import gaincal, fluxscale, flagdata, split, applycal, exportfits, clearcal
 import subprocess
 import os
 from wisp.makesubband import makesubbands
@@ -152,6 +152,8 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                 # myfile = [myfile
                 # print(myfile)
                 # mygainspw2 = mysubbands[1]
+
+        clearcal(vis=myfile[0])
 
         if nscal == 0:
                 i = nscal
