@@ -26,7 +26,7 @@ def flagsummary(myfile):
                 except AttributeError:
                         pass
 
-def mywsclean(myfile,wscommand,myniter,srno):    # you may change the multi-scale inputs as per your field
+def mywsclean(myfile,wsclean_params,myniter,srno):  
         nameprefix = myfile.split('-selfcal')[0]
         nameprefix = nameprefix.split('.')[0]
         print("The image files have the following prefix =",nameprefix)
@@ -35,9 +35,39 @@ def mywsclean(myfile,wscommand,myniter,srno):    # you may change the multi-scal
         else:
                 myoutimg = nameprefix+'-selfcal'+'img'+str(srno)
 
-        command = wscommand.split(' ')
+        size = wsclean_params.get('wsclean_size')
+        size = size.split(',')
+        scale = wsclean_params.get('wsclean_scale')
+        mgain = wsclean_params.get('wsclean_mgain')
+        weight = wsclean_params.get('wsclean_weight')
+        extra = wsclean_params.get('wsclean_extra')
+        extra = extra.split(' ')
 
-        command.extend(['-niter', str(myniter), '-name', myoutimg, myfile])
+        threshold = wsclean_params.get('wsclean_auto_threshold')
+        mask = wsclean_params.get('wsclean_auto_mask')
+
+        threshold = threshold.split(',')
+        mask = mask.split(',')
+
+        if srno < len(threshold):
+                auto_thresh = threshold[srno]
+                auto_mask = mask[srno]
+        else:
+                auto_thresh = threshold[-1]
+                auto_mask = mask[-1]
+
+        command = ['wsclean', '-j', '32', '-size', size[0], size[1], '-scale', scale, '-mgain', mgain, '-weight', weight]
+
+        if weight == 'briggs':
+
+                robust = wsclean_params.get('wsclean_robust')
+                command.extend([robust])
+
+        if extra[0] != '':
+
+                command.extend(extra)
+
+        command.extend(['-auto-mask', str(auto_mask), '-auto-threshold', str(auto_thresh),'-niter', str(myniter), '-name', myoutimg, myfile])
 
         subprocess.call(command)
 
@@ -128,7 +158,7 @@ def final_split(myfile, nproc):
         return myoutvis
       
 
-def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsubbands, niterstart, uvrascal, myclipresid, wscommand, join_scans, nproc, use_gnet = True):
+def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsubbands, niterstart, uvrascal, myclipresid, wsclean_params, join_scans, nproc, use_gnet = True):
         myref = myref
         nscal = nloops # number of selfcal loops
         npal = nploops # number of phasecal loops
@@ -141,26 +171,26 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
         if nsubbands > 1:
                 print("Making subbands...")
 
-                myfile = myfile[0]
-
                 subband_file = myfile.split('.ms')[0]+'_subbands.ms'
                 
                 subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.makesubband', f'{myfile}', f'{subband_file}', f'{nsubbands}'])
 
-                myfile = [subband_file]
+                myfile = subband_file
 
                 # myfile = [myfile
                 # print(myfile)
                 # mygainspw2 = mysubbands[1]
 
-        clearcal(vis=myfile[0])
+        clearcal(vis=myfile)
+
+        myfile = [myfile]  # list of visibilities
 
         if nscal == 0:
                 i = nscal
                 myniter = 0 # this is to make a dirty image
                 # mythresh = str(myvalinit/(i+1))+'mJy'
                 print("Using "+ myfile[i]+" for making only an image.")
-                myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
+                myimg = mywsclean(myfile[i],wsclean_params,myniter,i)   # tclean
                 exportfits(imagename=myimg+'.image.tt0', fitsimage=myimg+'.fits')
                 
         else:
@@ -175,7 +205,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                                         myniter = 0 # this is to make a dirty image
                                         # mythresh = str(myvalinit/(i+1))+'mJy'
                                         print("Using "+ myfile[i]+" for making only a dirty image.")
-                                        myimg = mywsclean(myfile[i],wscommand,myniter,i)   # tclean
+                                        myimg = mywsclean(myfile[i],wsclean_params,myniter,i)   # tclean
 
                         else:
                                 myniter=int(myniterstart*2**i) #myniterstart*(2**i)  # niter is doubled with every iteration int
@@ -185,7 +215,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                                 else:
                                         mypap = 'ap'
 #                                       
-                                myimg = mywsclean(myfile[i],wscommand,myniter,i)   # wsclean
+                                myimg = mywsclean(myfile[i],wsclean_params,myniter,i)   # wsclean
                                 myimages.append(myimg)        # list of all the images created so far
                                 flagresidual(myfile[i], use_gnet, myclipresid, join_scans, nproc)
                                 # full list of gaintables
@@ -208,7 +238,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                                 elif i == nscal and nsubbands > 1:
 
                                         myoutfile = final_split(myfile[i], nproc)
-                                        myimg = mywsclean(myoutfile,wscommand,myniter,i)
+                                        myimg = mywsclean(myoutfile,wsclean_params,myniter,i)
                                         flagresidual(myoutfile, use_gnet, myclipresid, join_scans, nproc)
                                         mypap = 'ap'
                                         myctables = mygaincal_ap(myoutfile,myref,i-1,mypap,mysolint1,uvrascal,mygainspw2)

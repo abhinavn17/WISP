@@ -29,7 +29,7 @@ def main():
     cfg = configparser.ConfigParser()
     cfg.read(cffile)
 
-    cfg.set('default', 'msfilename', msfile)
+    cfg.set('SELFCAL', 'msfilename', msfile)
 
     with open(cffile, 'w') as configfile:
         cfg.write(configfile)
