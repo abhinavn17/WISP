@@ -74,7 +74,7 @@ def mywsclean(myfile,wsclean_params,myniter,srno):
         return myoutimg
 
 
-def mysplit(myfile, mygaintables, srno, nproc):
+def mysplit(myfile, mygaintables, srno, nproc, use_mpicasa = False):
 
         filname_pre = myfile.split('-selfcal')[0]
         filname_pre = filname_pre.split('.')[0]     
@@ -88,7 +88,14 @@ def mysplit(myfile, mygaintables, srno, nproc):
       
         # split(vis=myfile, field='0', datacolumn='corrected', outputvis=myoutvis, keepmms=True)
 
-        subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.applycal', f'{myfile}', f'{mygaintables}', f'{srno}'])
+        if use_mpicasa:
+
+                subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.applycal', f'{myfile}', f'{mygaintables}', f'{srno}'])
+
+        else:
+
+                subprocess.call(['python', '-m', 'wisp.applycal', f'{myfile}', f'{mygaintables}', f'{srno}'])
+
         return myoutvis
 
 def mygaincal_ap(myfile,myref,srno,pap,mysolint,myuvrascal,mygainspw):
@@ -124,7 +131,7 @@ def myapplycal(myfile,mygaintables):
                  interp=['linearperobs,linearflagrel'], calwt=False, parang=False)
 
 
-def flagresidual(myfile, gnet, myclipresid, join_scans = -1, nproc = 16):
+def flagresidual(myfile, gnet, myclipresid, join_scans = -1, nproc = 16, use_mpicasa=False):
 
         if gnet:
 
@@ -133,14 +140,20 @@ def flagresidual(myfile, gnet, myclipresid, join_scans = -1, nproc = 16):
 
                 print("Running residual flagging using rflag...")
 
-                subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.rflag', f'{myfile}', f'{myclipresid}'])
+                if use_mpicasa:
+
+                        subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.rflag', f'{myfile}', f'{myclipresid}'])
+
+                else:
+
+                        subprocess.call(['python', '-m', 'wisp.rflag', f'{myfile}', f'{myclipresid}'])
         
         # flagdata(vis=myfile, mode='clip', clipminmax=[0, 0.75], datacolumn= 'RESIDUAL_DATA')
         # flagdata(vis=myfile, mode='extend', extendpols=False, growtime=75, growfreq=75, growaround=True)
         
         flagsummary(myfile)
 
-def final_split(myfile, nproc):
+def final_split(myfile, nproc, use_mpicasa):
 
         filname_pre = myfile.split('-selfcal')[0]
         filname_pre = filname_pre.split('.')[0]     
@@ -152,13 +165,18 @@ def final_split(myfile, nproc):
 
                 print("File "+myoutvis+" already exists. Deleting it.")
                 os.system(f'rm -rf {myoutvis}*')
+
+        if use_mpicasa:
         
-        subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.makesubband', f'{myfile}', f'{myoutvis}'])
+                subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.makesubband', f'{myfile}', f'{myoutvis}'])
+
+        else:
+                subprocess.call(['python', '-m', 'wisp.makesubband', f'{myfile}', f'{myoutvis}'])
 
         return myoutvis
       
 
-def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsubbands, niterstart, uvrascal, myclipresid, wsclean_params, join_scans, nproc, use_gnet = True):
+def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsubbands, niterstart, uvrascal, myclipresid, wsclean_params, join_scans, nproc, use_gnet = True, use_mpicasa = False):
         myref = myref
         nscal = nloops # number of selfcal loops
         npal = nploops # number of phasecal loops
@@ -172,8 +190,13 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                 print("Making subbands...")
 
                 subband_file = myfile.split('.ms')[0]+'_subbands.ms'
+
+                if use_mpicasa:
                 
-                subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.makesubband', f'{myfile}', f'{subband_file}', f'{nsubbands}'])
+                        subprocess.call(['mpirun', '-np', f'{nproc}', 'python', '-m', 'wisp.makesubband', f'{myfile}', f'{subband_file}', f'{nsubbands}'])
+
+                else:
+                        subprocess.call(['python', '-m', 'wisp.makesubband', f'{myfile}', f'{subband_file}', f'{nsubbands}'])
 
                 myfile = subband_file
 
@@ -217,7 +240,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
 #                                       
                                 myimg = mywsclean(myfile[i],wsclean_params,myniter,i)   # wsclean
                                 myimages.append(myimg)        # list of all the images created so far
-                                flagresidual(myfile[i], use_gnet, myclipresid, join_scans, nproc)
+                                flagresidual(myfile[i], use_gnet, myclipresid, join_scans, nproc, use_mpicasa)
                                 # full list of gaintables
                                 
                                 if i < nscal:
@@ -225,7 +248,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                                         myctables = mygaincal_ap(myfile[i],myref,i,mypap,mysolint1,uvrascal,mygainspw2)
                                         mygt.append(myctables) 
                                         # myapplycal(myfile[i],mygt[i])
-                                        myoutfile = mysplit(myfile[i], mygt[i], i, nproc)
+                                        myoutfile = mysplit(myfile[i], mygt[i], i, nproc, use_mpicasa)
                                         myfile.append(myoutfile)
 
                                         if i != 0:
@@ -237,14 +260,14 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
 
                                 elif i == nscal and nsubbands > 1:
 
-                                        myoutfile = final_split(myfile[i], nproc)
+                                        myoutfile = final_split(myfile[i], nproc, use_mpicasa)
                                         myimg = mywsclean(myoutfile,wsclean_params,myniter,i)
-                                        flagresidual(myoutfile, use_gnet, myclipresid, join_scans, nproc)
+                                        flagresidual(myoutfile, use_gnet, myclipresid, join_scans, nproc, use_mpicasa)
                                         mypap = 'ap'
                                         myctables = mygaincal_ap(myoutfile,myref,i-1,mypap,mysolint1,uvrascal,mygainspw2)
                                         mygt.append(myctables)
 
-                                        mysplit(myoutfile, mygt[i], i, nproc)
+                                        mysplit(myoutfile, mygt[i], i, nproc, use_mpicasa)
 
         return myfile, mygt, myimages
 

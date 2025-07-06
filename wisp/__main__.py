@@ -31,6 +31,7 @@ def main():
     uvrange = config.get('SELFCAL','uvrange')
     join_scans = config.getfloat('SELFCAL','join_scans')
     nproc = config.getint('SELFCAL','nproc')
+    use_mpicasa = config.getboolean('SELFCAL', 'use_mpicasa')
     wsclean_params = {k: v for k, v in config.items('SELFCAL') if k.startswith('wsclean')}
 
     print("wsclean parameters:", wsclean_params)
@@ -54,7 +55,7 @@ def main():
     
     myfile = msfilename_avg if avg_bin > 1 else msfilename
   
-    myselfcal(myfile,ref_ant,scaloops,pcaloops,scalsolints,"",False,nsubbands,niter_start, uvrange, clipresid, wsclean_params, join_scans, nproc, use_gnet)
+    myselfcal(myfile,ref_ant,scaloops,pcaloops,scalsolints,"",False,nsubbands,niter_start, uvrange, clipresid, wsclean_params, join_scans, nproc, use_gnet, use_mpicasa)
 
 
 if __name__ == '__main__':
