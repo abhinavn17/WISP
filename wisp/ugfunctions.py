@@ -26,7 +26,7 @@ def flagsummary(myfile):
                 except AttributeError:
                         pass
 
-def mywsclean(myfile,wsclean_params,myniter,srno):  
+def mywsclean(myfile,wsclean_params,myniter,srno, nproc):  
         nameprefix = myfile.split('-selfcal')[0]
         nameprefix = nameprefix.split('.')[0]
         print("The image files have the following prefix =",nameprefix)
@@ -51,12 +51,14 @@ def mywsclean(myfile,wsclean_params,myniter,srno):
 
         if srno < len(threshold):
                 auto_thresh = threshold[srno]
-                auto_mask = mask[srno]
         else:
                 auto_thresh = threshold[-1]
+        if srno < len(mask):
+                auto_mask = mask[srno]
+        else:
                 auto_mask = mask[-1]
 
-        command = ['wsclean', '-j', '32', '-size', size[0], size[1], '-scale', scale, '-mgain', mgain, '-weight', weight]
+        command = ['wsclean', '-j', nproc, '-size', size[0], size[1], '-scale', scale, '-mgain', mgain, '-weight', weight]
 
         if weight == 'briggs':
 
@@ -213,7 +215,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                 myniter = 0 # this is to make a dirty image
                 # mythresh = str(myvalinit/(i+1))+'mJy'
                 print("Using "+ myfile[i]+" for making only an image.")
-                myimg = mywsclean(myfile[i],wsclean_params,myniter,i)   # tclean
+                myimg = mywsclean(myfile[i],wsclean_params,myniter,i, nproc)   # tclean
                 exportfits(imagename=myimg+'.image.tt0', fitsimage=myimg+'.fits')
                 
         else:
@@ -228,7 +230,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                                         myniter = 0 # this is to make a dirty image
                                         # mythresh = str(myvalinit/(i+1))+'mJy'
                                         print("Using "+ myfile[i]+" for making only a dirty image.")
-                                        myimg = mywsclean(myfile[i],wsclean_params,myniter,i)   # tclean
+                                        myimg = mywsclean(myfile[i],wsclean_params,myniter,i, nproc)   # tclean
 
                         else:
                                 myniter=int(myniterstart*2**i) #myniterstart*(2**i)  # niter is doubled with every iteration int
@@ -238,7 +240,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                                 else:
                                         mypap = 'ap'
 #                                       
-                                myimg = mywsclean(myfile[i],wsclean_params,myniter,i)   # wsclean
+                                myimg = mywsclean(myfile[i],wsclean_params,myniter,i, nproc)   # wsclean
                                 myimages.append(myimg)        # list of all the images created so far
                                 flagresidual(myfile[i], use_gnet, myclipresid, join_scans, nproc, use_mpicasa)
                                 # full list of gaintables
@@ -261,7 +263,7 @@ def myselfcal(myfile,myref,nloops,nploops,mysolint1,mygainspw2,mymakedirty, nsub
                                 elif i == nscal and nsubbands > 1:
 
                                         myoutfile = final_split(myfile[i], nproc, use_mpicasa)
-                                        myimg = mywsclean(myoutfile,wsclean_params,myniter,i)
+                                        myimg = mywsclean(myoutfile,wsclean_params,myniter,i,nproc)
                                         flagresidual(myoutfile, use_gnet, myclipresid, join_scans, nproc, use_mpicasa)
                                         mypap = 'ap'
                                         myctables = mygaincal_ap(myoutfile,myref,i-1,mypap,mysolint1,uvrascal,mygainspw2)
