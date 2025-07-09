@@ -58,7 +58,7 @@ def mywsclean(myfile,wsclean_params,myniter,srno, nproc):
         else:
                 auto_mask = mask[-1]
 
-        command = ['wsclean', '-j', nproc, '-size', size[0], size[1], '-scale', scale, '-mgain', mgain, '-weight', weight]
+        command = ['wsclean', '-j', str(nproc), '-size', size[0], size[1], '-scale', scale, '-mgain', mgain, '-weight', weight]
 
         if weight == 'briggs':
 
