@@ -47,9 +47,12 @@ def main():
         print(f"Using {avg_bin} channel bin for averaging the data.")
         msfilename_avg = msfilename.replace('.ms', '_avg.ms')
 
+        if msfilename_avg.endswith('/'):
+            msfilename_avg = msfilename_avg[:-1]
+
         if os.path.exists(msfilename_avg):
             print(f"Removing existing averaged MS file: {msfilename_avg}")
-            os.system(f'rm -rf {msfilename_avg}')
+            os.system(f'rm -rf {msfilename_avg}*')
 
         mstransform(vis = msfilename, outputvis= msfilename_avg, datacolumn = 'data', chanaverage= True, chanbin = avg_bin, keepflags = True)
     
