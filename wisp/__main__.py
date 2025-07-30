@@ -52,7 +52,8 @@ def main():
 
         if os.path.exists(msfilename_avg):
             print(f"Removing existing averaged MS file: {msfilename_avg}")
-            os.system(f'rm -rf {msfilename_avg}*')
+            os.system(f'rm -rf {msfilename_avg}')
+            os.system(f'rm -rf {msfilename_avg}.flagversions')
 
         mstransform(vis = msfilename, outputvis= msfilename_avg, datacolumn = 'data', chanaverage= True, chanbin = avg_bin, keepflags = True)
     
